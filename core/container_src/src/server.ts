@@ -89,7 +89,7 @@ const server = Bun.serve({
     // POST /agent/create - Create a new agent session
     if (path === '/agent/create' && method === 'POST') {
       const body = await getBody(req);
-      const { sessionId, systemPrompt, model, webSearch, webSearchConfig } = body || {};
+      const { sessionId, systemPrompt, model } = body || {};
 
       if (!sessionId) {
         return jsonResponse({ error: 'Missing sessionId' }, 400);
@@ -104,20 +104,32 @@ const server = Bun.serve({
         return jsonResponse({ error: 'ANTHROPIC_API_KEY not set' }, 500);
       }
 
+      // Web search enabled by default with sensible defaults
+      const defaultSystemPrompt = `You are a smart, helpful intern assistant with access to web search.
+
+Your role is to help with email responses and general tasks. When responding:
+- Be concise and to the point
+- Use web search to find up-to-date information when needed
+- Maintain a professional but friendly tone
+- Get straight to the answer without unnecessary preamble
+- If asked to draft an email, keep it brief and action-oriented
+
+You have access to real-time web search to answer questions with current information.`;
+
       agentSessions.set(sessionId, {
         messages: [],
-        systemPrompt: systemPrompt || 'You are a helpful AI assistant.',
+        systemPrompt: systemPrompt || defaultSystemPrompt,
         model: model || 'claude-sonnet-4-5',
-        webSearch: webSearch || false,
-        webSearchConfig: webSearchConfig,
+        webSearch: true,
+        webSearchConfig: {
+          maxUses: 5,
+        },
         createdAt: new Date(),
       });
 
       return jsonResponse({
         message: 'Agent session created',
         sessionId,
-        model: model || 'claude-sonnet-4-5',
-        webSearch: webSearch || false,
       });
     }
 
@@ -125,7 +137,7 @@ const server = Bun.serve({
     if (path.startsWith('/agent/') && path.endsWith('/query') && method === 'POST') {
       const sessionId = path.split('/')[2];
       const body = await getBody(req);
-      const { prompt, stream = false } = body || {};
+      const { prompt, stream = false, to, subject } = body || {};
 
       if (!prompt) {
         return jsonResponse({ error: 'Missing prompt' }, 400);
@@ -145,17 +157,90 @@ const server = Bun.serve({
         const result = await runAgentQuery(session, prompt, apiKey, stream);
 
         if (result.type === 'stream') {
-          return new Response(result.stream, {
+          // For streaming, return text-only stream
+          const textStream = new ReadableStream({
+            async start(controller) {
+              const reader = result.stream!.getReader();
+              const decoder = new TextDecoder();
+              
+              try {
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  
+                  const chunk = decoder.decode(value, { stream: true });
+                  const lines = chunk.split('\n').filter(line => line.trim());
+                  
+                  for (const line of lines) {
+                    try {
+                      const event = JSON.parse(line);
+                      // Only send text content
+                      if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+                        controller.enqueue(new TextEncoder().encode(event.delta.text));
+                      }
+                    } catch {}
+                  }
+                }
+                controller.close();
+              } catch (error) {
+                controller.error(error);
+              }
+            }
+          });
+
+          return new Response(textStream, {
             headers: {
-              'Content-Type': 'application/x-ndjson',
+              'Content-Type': 'text/plain',
               'Transfer-Encoding': 'chunked',
             },
           });
         } else {
+          // Extract just the text content
+          const message = result.message;
+          let textContent = '';
+          
+          if (message && message.content) {
+            for (const block of message.content) {
+              if (block.type === 'text') {
+                textContent += block.text;
+              }
+            }
+          }
+
+          // Send email by default to hardcoded address
+          if (textContent) {
+            try {
+              const emailPayload = {
+                to: to || 'ri.kwmachinelearning@gmail.com',
+                subject: subject || 'Intern Assistant Response',
+                htmlBody: textContent,
+              };
+
+              await fetch('https://script.google.com/macros/s/AKfycby3OdX6lgv3otIxf2M4TRJKvhLgXe30bLKPJmu28xrpCpprHRQClXyElcXog6a7yL_0ew/exec', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(emailPayload),
+              });
+
+              return jsonResponse({
+                text: textContent,
+                emailSent: true,
+                to: emailPayload.to,
+                subject: emailPayload.subject,
+              });
+            } catch (emailError) {
+              return jsonResponse({
+                text: textContent,
+                emailSent: false,
+                emailError: emailError instanceof Error ? emailError.message : 'Failed to send email',
+              });
+            }
+          }
+
           return jsonResponse({
-            sessionId,
-            message: result.message,
-            totalMessages: session.messages.length,
+            text: textContent,
           });
         }
       } catch (error) {
