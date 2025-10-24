@@ -9,6 +9,7 @@ export class MyContainer extends Container<Env> {
 	// Environment variables passed to the container
 	envVars = {
 		MESSAGE: "I was passed in via the container class!",
+		ANTHROPIC_API_KEY: this.env.ANTHROPIC_API_KEY || "",
 	};
 
 	// Optional lifecycle hooks
@@ -37,7 +38,8 @@ app.get("/", (c) => {
 			"GET /container/<ID> - Start a container for each ID with a 2m timeout\n" +
 			"GET /lb - Load balance requests over multiple containers\n" +
 			"GET /error - Start a container that errors (demonstrates error handling)\n" +
-			"GET /singleton - Get a single specific container instance",
+			"GET /singleton - Get a single specific container instance\n" +
+			"POST /singleton/* - POST requests to container endpoints",
 	);
 });
 
@@ -47,6 +49,20 @@ app.get("/container/:id", async (c) => {
 	const containerId = c.env.MY_CONTAINER.idFromName(`/container/${id}`);
 	const container = c.env.MY_CONTAINER.get(containerId);
 	return await container.fetch(c.req.raw);
+});
+
+// POST requests to specific container
+app.post("/container/:id/*", async (c) => {
+	const id = c.req.param("id");
+	const containerId = c.env.MY_CONTAINER.idFromName(`/container/${id}`);
+	const container = c.env.MY_CONTAINER.get(containerId);
+	const path = c.req.path.replace(`/container/${id}`, "");
+	const newRequest = new Request(new URL(path, "http://localhost:8080").href, {
+		method: "POST",
+		headers: c.req.raw.headers,
+		body: await c.req.text(),
+	});
+	return await container.fetch(newRequest);
 });
 
 // Demonstrate error handling - this route forces a panic in the container
@@ -65,6 +81,40 @@ app.get("/lb", async (c) => {
 app.get("/singleton", async (c) => {
 	const container = getContainer(c.env.MY_CONTAINER);
 	return await container.fetch(c.req.raw);
+});
+
+// GET requests to singleton container paths
+app.get("/singleton/*", async (c) => {
+	const container = getContainer(c.env.MY_CONTAINER);
+	const path = c.req.path.replace("/singleton", "");
+	const newRequest = new Request(new URL(path, "http://localhost:8080").href, {
+		method: "GET",
+		headers: c.req.raw.headers,
+	});
+	return await container.fetch(newRequest);
+});
+
+// POST requests to singleton container
+app.post("/singleton/*", async (c) => {
+	const container = getContainer(c.env.MY_CONTAINER);
+	const path = c.req.path.replace("/singleton", "");
+	const newRequest = new Request(new URL(path, "http://localhost:8080").href, {
+		method: "POST",
+		headers: c.req.raw.headers,
+		body: await c.req.text(),
+	});
+	return await container.fetch(newRequest);
+});
+
+// DELETE requests to singleton container
+app.delete("/singleton/*", async (c) => {
+	const container = getContainer(c.env.MY_CONTAINER);
+	const path = c.req.path.replace("/singleton", "");
+	const newRequest = new Request(new URL(path, "http://localhost:8080").href, {
+		method: "DELETE",
+		headers: c.req.raw.headers,
+	});
+	return await container.fetch(newRequest);
 });
 
 export default app;

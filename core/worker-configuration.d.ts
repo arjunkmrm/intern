@@ -10,7 +10,9 @@ declare namespace Cloudflare {
 		MY_CONTAINER: DurableObjectNamespace<import("./src/index").MyContainer>;
 	}
 }
-interface Env extends Cloudflare.Env {}
+interface Env extends Cloudflare.Env {
+	ANTHROPIC_API_KEY?: string;
+}
 
 // Begin runtime types
 /*! *****************************************************************************
