@@ -1,0 +1,55 @@
+:root{
+  --bg:#0b1220; --panel:#111a2b; --text:#ecf2ff; --muted:#98a1b3;
+  --accent:#6aa0ff; --accent-2:#4ad295; --border:#20304d;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+  Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+  background:linear-gradient(180deg,#0b1220 0%,#0e1627 100%);color:var(--text)}
+header{padding:28px 20px 10px;max-width:920px;margin:0 auto}
+h1{margin:0;font-size:28px;letter-spacing:0.5px}
+.subtitle{margin:6px 0 0;color:var(--muted)}
+main{max-width:920px;margin:0 auto;padding:10px 20px 40px;display:grid;gap:16px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px}
+.card h2{margin-top:0}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{appearance:none;border:1px solid var(--border);background:#16233c;color:var(--text);
+  padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+.btn:hover{filter:brightness(1.05)}
+.btn.primary{background:var(--accent);color:#08162d;border:1px solid transparent}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#1b2a49;border:1px solid var(--border)}
+.pill.ok{background:var(--accent-2);color:#072216}
+.pill.err{background:#e2555a;color:#300}
+.kv{margin-top:10px;color:var(--muted);font-size:14px}
+.kv div{margin:2px 0}
+.log{background:#0b1220;border:1px solid var(--border);border-radius:8px;padding:10px;min-height:48px;white-space:pre-wrap}
+footer{max-width:920px;margin:10px auto 40px;padding:0 20px;color:var(--muted);display:flex;justify-content:space-between}
+footer a{color:var(--muted)}
+
+/* Standard view */
+header{position:relative}
+h1{text-transform:lowercase}
+.standard{display:flex;align-items:center;gap:16px}
+.status{font-weight:700}
+.status.ok{color:var(--accent-2)}
+.status.err{color:#e2555a}
+.visually-hidden{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap}
+
+/* Dev mode toggle */
+/* Hide dev toggle in simplified UI */
+.dev-toggle{display:none}
+
+/* Dev-only sections hidden by default */
+.dev-only{display:none}
+/* Force dev-only sections hidden even if dev mode toggled */
+body.dev-mode .dev-only{display:none}
+
+/* Make primary connect button big and prominent */
+#connect-btn.btn.big{font-size:20px;padding:16px 22px}
+#connect-btn.btn.big{box-shadow:0 6px 18px rgba(106,160,255,0.35)}
+.standard{justify-content:space-between}
+
+/* Utilities */
+.hidden{display:none}
+#notify-card{display:none}

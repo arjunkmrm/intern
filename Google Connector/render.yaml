@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: intern
+    env: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 18.20.5
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URL
+        sync: false
+      - key: GMAIL_TOPIC
+        sync: false
+      - key: NGROK_ENDPOINT
+        sync: false
+

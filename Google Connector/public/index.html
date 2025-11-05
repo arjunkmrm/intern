@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>intern — Gmail Webhook</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>intern</h1>
+    </header>
+
+    <main>
+      <!-- Standard view -->
+      <section class="card" id="standard-card">
+        <h2 class="visually-hidden">intern</h2>
+        <div class="standard">
+          <a class="btn primary big" id="connect-btn" href="/connect">Connect to Google</a>
+          <div class="status-row">Status: <span class="status" id="simple-status">checking…</span></div>
+        </div>
+      </section>
+
+      <!-- New Email Notification (standard view) -->
+      <section class="card" id="notify-card">
+        <h2>New Email Received</h2>
+        <div class="kv" id="notify-meta">
+          <div><strong>Subject:</strong> <span id="notify-subject">—</span></div>
+          <div><strong>From:</strong> <span id="notify-from">—</span></div>
+          <div><strong>To:</strong> <span id="notify-to">—</span></div>
+        </div>
+        <pre class="log" id="notify-body">Waiting for new email…</pre>
+        <p id="notify-status" class="subtitle">Listening for emails…</p>
+      </section>
+
+      <!-- Dev mode: advanced tools -->
+      <section class="card dev-only" id="dev-connect-card">
+        <h2>Connection</h2>
+        <p id="status-text">Status: <span class="pill" id="conn-pill">checking…</span></p>
+        <div class="actions">
+          <a class="btn" href="/connect">Connect with Google</a>
+          <button class="btn" id="refresh-status">Refresh status</button>
+        </div>
+        <div class="kv" id="profile"></div>
+      </section>
+
+      <section class="card dev-only">
+        <h2>2) Start Gmail Watch</h2>
+        <p>Enables push notifications via Pub/Sub. Requires GMAIL_TOPIC in env.</p>
+        <div class="actions">
+          <button class="btn" id="watch-start">Start watch</button>
+          <button class="btn" id="watch-stop">Stop watch</button>
+        </div>
+        <pre class="log" id="watch-log"></pre>
+      </section>
+
+      <section class="card dev-only">
+        <h2>3) Test Fetch</h2>
+        <p>Fetches your latest unread email and forwards it to your NGROK_ENDPOINT.</p>
+        <div class="actions">
+          <button class="btn" id="fetch-latest">Fetch latest unread</button>
+        </div>
+        <pre class="log" id="fetch-log"></pre>
+      </section>
+
+      <section class="card dev-only" id="live-card">
+        <h2>Latest Email (live)</h2>
+        <div class="kv" id="latest-meta"></div>
+        <pre class="log" id="latest-body"></pre>
+        <div class="actions"><span class="pill" id="sse-pill">connecting…</span></div>
+      </section>
+
+      <section class="card dev-only">
+        <h2>Incoming Webhook Log</h2>
+        <p>When your NGROK_ENDPOINT is this app's <code>/incoming</code>, forwarded emails appear in the server console.</p>
+      </section>
+    </main>
+
+    <footer>
+      <span>intern ©</span>
+      <a href="/health" target="_blank">health</a>
+    </footer>
+
+    <script src="/app.js"></script>
+  </body>
+  </html>
